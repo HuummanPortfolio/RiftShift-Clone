@@ -1,6 +1,5 @@
-using System.Collections;
+using Assets.Scripts.VcamCollider;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class VirtualCamera : MonoBehaviour
@@ -17,14 +16,13 @@ public class VirtualCamera : MonoBehaviour
         var colliders = Physics2D.OverlapAreaAll(transformUjung1.position, transformUjung2.position, mask);
         if (colliders.Length != currentCollider)
         {
-            virtualcameraPartner.CreateCollider(colliders.Length - currentCollider);
-            currentCollider = colliders.Length;
+            VCamColliderUtiliity.CreateCollider(gameObject, ref virtualcameraPartner, ref currentCollider, ref colliderList, ref colliders, colliders.Length - currentCollider);
         }
 
-        virtualcameraPartner.RedrawCollider(colliders);
+        VCamColliderUtiliity.RedrawCollider(ref virtualcameraPartner, ref colliderList, colliders);
     }
 
-    void CreateCollider(int n)
+    /*void CreateCollider(int n)
     {
         if (n > 0)
             for (int i = 0; i < n; i++)
@@ -75,5 +73,5 @@ public class VirtualCamera : MonoBehaviour
             box.offset = (pointA + pointB) / 2f / virtualcameraPartner.transform.localScale.x;
             box.size = (pointA - pointB)  / virtualcameraPartner.transform.localScale.x;
         }
-    }
+    }*/
 }
