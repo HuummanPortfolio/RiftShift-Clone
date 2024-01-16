@@ -23,7 +23,7 @@ namespace Assets.Scripts.VcamCollider
                 {
                     var col = baseCollidersList[i];
                     baseCollidersList.Remove(col);
-                    UnityEngine.Object.Destroy(col);
+                    Object.Destroy(col);
                 }
 
             currentCollider = colsOverlap.Length;
@@ -36,24 +36,24 @@ namespace Assets.Scripts.VcamCollider
                 Vector2 pointA = cols[i].transform.GetChild(0).position;
                 Vector2 pointB = cols[i].transform.GetChild(1).position;
 
-                if (pointA.x > targetVCam.transformUjung1.position.x)
+                if (pointA.x > targetVCam.edgeTransform1.position.x)
                 {
-                    pointA.x = targetVCam.transformUjung1.position.x;
+                    pointA.x = targetVCam.edgeTransform1.position.x;
                 }
 
-                if (pointA.y > targetVCam.transformUjung1.position.y)
+                if (pointA.y > targetVCam.edgeTransform1.position.y)
                 {
-                    pointA.y = targetVCam.transformUjung1.position.y;
+                    pointA.y = targetVCam.edgeTransform1.position.y;
                 }
 
-                if (pointB.x < targetVCam.transformUjung2.position.x)
+                if (pointB.x < targetVCam.edgeTransform2.position.x)
                 {
-                    pointB.x = targetVCam.transformUjung2.position.x;
+                    pointB.x = targetVCam.edgeTransform2.position.x;
                 }
 
-                if (pointB.y < targetVCam.transformUjung2.position.y)
+                if (pointB.y < targetVCam.edgeTransform2.position.y)
                 {
-                    pointB.y = targetVCam.transformUjung2.position.y;
+                    pointB.y = targetVCam.edgeTransform2.position.y;
                 }
 
                 pointA -= (Vector2)targetVCam.transform.position;
