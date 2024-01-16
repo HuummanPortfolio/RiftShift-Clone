@@ -1,4 +1,4 @@
-using Assets.Scripts.VcamCollider;
+using RiftShiftClone.Scripts.VcamCollider;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -9,7 +9,8 @@ public class VirtualCamera : MonoBehaviour
     [SerializeField] float baseSize = 3;
     [FormerlySerializedAs("transformUjung1")] public Transform edgeTransform1;
     [FormerlySerializedAs("transformUjung2")] public Transform edgeTransform2;
-    
+
+    [Header("Colliders")]
     public int currentCollider = 0;
     public LayerMask mask;
     public List<Collider2D> colliderList;
@@ -53,9 +54,6 @@ public class VirtualCamera : MonoBehaviour
 
     private void UpdateScale(float size)
     {
-        if (transform.localScale.x == baseSize || transform.localScale.y == baseSize)
-            return;
-
         baseSize = size;
         transform.localScale = new(size, size,1);
 

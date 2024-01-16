@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.VcamCollider
+namespace RiftShiftClone.Scripts.VcamCollider
 {
     public class VCamColliderUtiliity
     {
