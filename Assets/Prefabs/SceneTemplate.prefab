@@ -562,6 +562,10 @@ PrefabInstance:
       value: VirtualCamera
       objectReference: {fileID: 0}
     - target: {fileID: 5944579821469498983, guid: 6875886b18a69714d881a9f503b91a7d, type: 3}
+      propertyPath: isMainVCam
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5944579821469498983, guid: 6875886b18a69714d881a9f503b91a7d, type: 3}
       propertyPath: virtualcameraPartner
       value: 
       objectReference: {fileID: 7272659108467038511}
