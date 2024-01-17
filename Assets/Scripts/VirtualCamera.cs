@@ -1,5 +1,6 @@
-using RiftShiftClone.Scripts.VcamCollider;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -23,13 +24,17 @@ public class VirtualCamera : MonoBehaviour
 
     private void Awake()
     {
-        GetReference();
+        var colliders = Physics2D.OverlapAreaAll(transformUjung1.position, transformUjung2.position, mask);
+        if (colliders.Length != currentCollider)
+        {
+            virtualcameraPartner.CreateCollider(colliders.Length - currentCollider);
+            currentCollider = colliders.Length;
+        }
 
-        if (isMainVCam)
-        UpdateScale();
+        virtualcameraPartner.RedrawCollider(colliders);
     }
 
-    private void Update()
+    void CreateCollider(int n)
     {
         var overlappingColliders = Physics2D.OverlapAreaAll(edgeTransform1.position, edgeTransform2.position, mask);
         if (overlappingColliders.Length != currentCollider)
@@ -77,8 +82,9 @@ public class VirtualCamera : MonoBehaviour
     {
         GetReference();
 
-        if (isMainVCam)
-            UpdateScale();
+            BoxCollider2D box = colliderList[i] as BoxCollider2D;
+            box.offset = (pointA + pointB) / 2f / virtualcameraPartner.transform.localScale.x;
+            box.size = (pointA - pointB)  / virtualcameraPartner.transform.localScale.x;
+        }
     }
-#endif
 }
