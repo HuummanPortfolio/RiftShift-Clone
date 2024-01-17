@@ -24,6 +24,13 @@ public class VirtualCamera : MonoBehaviour
 
     private void Awake()
     {
+        GetReference();
+        if (isMainVCam)
+            UpdateScale();
+    }
+
+    private void Update()
+    {
         var colliders = Physics2D.OverlapAreaAll(edgeTransform1.position, edgeTransform2.position, mask);
         if (colliders.Length != currentCollider)
         {
