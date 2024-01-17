@@ -24,7 +24,7 @@ public class VirtualCamera : MonoBehaviour
 
     private void Awake()
     {
-        var colliders = Physics2D.OverlapAreaAll(transformUjung1.position, transformUjung2.position, mask);
+        var colliders = Physics2D.OverlapAreaAll(edgeTransform1.position, edgeTransform2.position, mask);
         if (colliders.Length != currentCollider)
         {
             virtualcameraPartner.CreateCollider(colliders.Length - currentCollider);
@@ -36,14 +36,57 @@ public class VirtualCamera : MonoBehaviour
 
     void CreateCollider(int n)
     {
-        var overlappingColliders = Physics2D.OverlapAreaAll(edgeTransform1.position, edgeTransform2.position, mask);
-        if (overlappingColliders.Length != currentCollider)
-        {
-            VCamColliderUtiliity.CreateCollider(gameObject, ref virtualcameraPartner, ref currentCollider, ref colliderList, ref overlappingColliders, overlappingColliders.Length - currentCollider);
-        }
-
-        VCamColliderUtiliity.RedrawCollider(ref virtualcameraPartner, ref colliderList, overlappingColliders);
+        if (n > 0)
+            for (int i = 0; i < n; i++)
+            {
+                var col = gameObject.AddComponent<BoxCollider2D>();
+                colliderList.Add(col);
+            }
+        else
+            for (int i = Mathf.Abs(n) - 1; i >= 0; i--)
+            {
+                var col = colliderList[i];
+                colliderList.Remove(col);
+                Destroy(col);
+            }
     }
+
+    void RedrawCollider(Collider2D[] cols)
+    {
+        for (int i = 0; i < cols.Length; i++)
+        {
+            Vector2 pointA = cols[i].transform.GetChild(0).position;
+            Vector2 pointB = cols[i].transform.GetChild(1).position;
+
+            if (pointA.x > virtualcameraPartner.edgeTransform1.position.x)
+            {
+                pointA.x = virtualcameraPartner.edgeTransform1.position.x;
+            }
+
+            if (pointA.y > virtualcameraPartner.edgeTransform1.position.y)
+            {
+                pointA.y = virtualcameraPartner.edgeTransform1.position.y;
+            }
+
+            if (pointB.x < virtualcameraPartner.edgeTransform2.position.x)
+            {
+                pointB.x = virtualcameraPartner.edgeTransform2.position.x;
+            }
+
+            if (pointB.y < virtualcameraPartner.edgeTransform2.position.y)
+            {
+                pointB.y = virtualcameraPartner.edgeTransform2.position.y;
+            }
+
+            pointA -= (Vector2)virtualcameraPartner.transform.position;
+            pointB -= (Vector2)virtualcameraPartner.transform.position;
+
+            BoxCollider2D box = colliderList[i] as BoxCollider2D;
+            box.offset = (pointA + pointB) / 2f / virtualcameraPartner.transform.localScale.x;
+            box.size = (pointA - pointB) / virtualcameraPartner.transform.localScale.x;
+        }
+    }
+
 
     [ContextMenu("Update Scale")]
     private void UpdateScale()
@@ -81,10 +124,8 @@ public class VirtualCamera : MonoBehaviour
     private void OnValidate()
     {
         GetReference();
-
-            BoxCollider2D box = colliderList[i] as BoxCollider2D;
-            box.offset = (pointA + pointB) / 2f / virtualcameraPartner.transform.localScale.x;
-            box.size = (pointA - pointB)  / virtualcameraPartner.transform.localScale.x;
-        }
+        if (isMainVCam)
+            UpdateScale();
     }
+#endif
 }
