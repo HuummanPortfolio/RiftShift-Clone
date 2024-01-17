@@ -1,5 +1,6 @@
-using RiftShiftClone.Scripts.VcamCollider;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -23,22 +24,69 @@ public class VirtualCamera : MonoBehaviour
 
     private void Awake()
     {
-        GetReference();
-
-        if (isMainVCam)
-        UpdateScale();
-    }
-
-    private void Update()
-    {
-        var overlappingColliders = Physics2D.OverlapAreaAll(edgeTransform1.position, edgeTransform2.position, mask);
-        if (overlappingColliders.Length != currentCollider)
+        var colliders = Physics2D.OverlapAreaAll(edgeTransform1.position, edgeTransform2.position, mask);
+        if (colliders.Length != currentCollider)
         {
-            VCamColliderUtiliity.CreateCollider(gameObject, ref virtualcameraPartner, ref currentCollider, ref colliderList, ref overlappingColliders, overlappingColliders.Length - currentCollider);
+            virtualcameraPartner.CreateCollider(colliders.Length - currentCollider);
+            currentCollider = colliders.Length;
         }
 
-        VCamColliderUtiliity.RedrawCollider(ref virtualcameraPartner, ref colliderList, overlappingColliders);
+        virtualcameraPartner.RedrawCollider(colliders);
     }
+
+    void CreateCollider(int n)
+    {
+        if (n > 0)
+            for (int i = 0; i < n; i++)
+            {
+                var col = gameObject.AddComponent<BoxCollider2D>();
+                colliderList.Add(col);
+            }
+        else
+            for (int i = Mathf.Abs(n) - 1; i >= 0; i--)
+            {
+                var col = colliderList[i];
+                colliderList.Remove(col);
+                Destroy(col);
+            }
+    }
+
+    void RedrawCollider(Collider2D[] cols)
+    {
+        for (int i = 0; i < cols.Length; i++)
+        {
+            Vector2 pointA = cols[i].transform.GetChild(0).position;
+            Vector2 pointB = cols[i].transform.GetChild(1).position;
+
+            if (pointA.x > virtualcameraPartner.edgeTransform1.position.x)
+            {
+                pointA.x = virtualcameraPartner.edgeTransform1.position.x;
+            }
+
+            if (pointA.y > virtualcameraPartner.edgeTransform1.position.y)
+            {
+                pointA.y = virtualcameraPartner.edgeTransform1.position.y;
+            }
+
+            if (pointB.x < virtualcameraPartner.edgeTransform2.position.x)
+            {
+                pointB.x = virtualcameraPartner.edgeTransform2.position.x;
+            }
+
+            if (pointB.y < virtualcameraPartner.edgeTransform2.position.y)
+            {
+                pointB.y = virtualcameraPartner.edgeTransform2.position.y;
+            }
+
+            pointA -= (Vector2)virtualcameraPartner.transform.position;
+            pointB -= (Vector2)virtualcameraPartner.transform.position;
+
+            BoxCollider2D box = colliderList[i] as BoxCollider2D;
+            box.offset = (pointA + pointB) / 2f / virtualcameraPartner.transform.localScale.x;
+            box.size = (pointA - pointB) / virtualcameraPartner.transform.localScale.x;
+        }
+    }
+
 
     [ContextMenu("Update Scale")]
     private void UpdateScale()
@@ -46,7 +94,7 @@ public class VirtualCamera : MonoBehaviour
         if (transform.localScale.x == baseSize || transform.localScale.y == baseSize)
             return;
 
-        transform.localScale = new(baseSize, baseSize,1);
+        transform.localScale = new(baseSize, baseSize, 1);
 
         if (renderCamera != null)
             renderCamera.orthographicSize = transform.localScale.x / 2;
@@ -55,12 +103,12 @@ public class VirtualCamera : MonoBehaviour
     private void UpdateScale(float size)
     {
         baseSize = size;
-        transform.localScale = new(size, size,1);
+        transform.localScale = new(size, size, 1);
 
         if (renderCamera != null)
             renderCamera.orthographicSize = transform.localScale.x / 2;
     }
-    
+
     private void GetReference()
     {
         if (renderCamera == null) renderCamera = GetComponentInChildren<Camera>();
@@ -76,7 +124,6 @@ public class VirtualCamera : MonoBehaviour
     private void OnValidate()
     {
         GetReference();
-
         if (isMainVCam)
             UpdateScale();
     }
