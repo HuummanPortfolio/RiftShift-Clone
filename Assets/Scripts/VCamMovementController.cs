@@ -76,6 +76,9 @@ public class VCamMovementController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Movement controller Mechanism
+    /// </summary>
     private void VcamMovement()
     {
         //get position of the cursor from the world point
