@@ -5,20 +5,21 @@ using UnityEngine;
 
 public class VCamMovementController : MonoBehaviour
 {
-
-    private Camera mainCam;
-    private Renderer objRenderer;
-    private Vector3 offset;
-    [SerializeField] private Vector2 hitPositionDiff;
-    [SerializeField] private Vector2 hitPosition;
-    private float objectWidth = 0f;
-    private float objectHeight = 0f;
-    private bool isControlled = false;
+    [SerializeField] private LayerMask layerMask;
+    [SerializeField] private Camera mainCam;
+    [SerializeField] private Renderer objRenderer;
+    [SerializeField] private Vector2 lastPosition;
+    [SerializeField] private Vector3 offset;
+    [SerializeField] private Vector2 desiredPosition;
+    [SerializeField] private float objectWidth = 0f;
+    [SerializeField] private float objectHeight = 0f;
+    [SerializeField] private bool isControlled = false;
     [SerializeField] private Transform vcamOther = null;
     [SerializeField] bool canMoveHorizontal;
     [SerializeField] bool canMoveVertical;
     [SerializeField] bool lockedFromHorizontal;
     [SerializeField] bool lockedFromVertical;
+    private Rigidbody2D rb2d;
 
     #region MONO METHOD
     private void Awake()
@@ -42,6 +43,8 @@ public class VCamMovementController : MonoBehaviour
 
     #endregion
 
+
+    #region PRIVATE METHOD
     /// <summary>
     /// Initialize something
     /// </summary>
@@ -49,7 +52,7 @@ public class VCamMovementController : MonoBehaviour
     {
         mainCam = Camera.main;
         objRenderer = GetComponent<Renderer>();
-
+        rb2d = GetComponent<Rigidbody2D>();
         if (objRenderer != null)
         {
             objectWidth = objRenderer.bounds.extents.x;
@@ -62,46 +65,131 @@ public class VCamMovementController : MonoBehaviour
         //move virtual cam
         Vector2 newPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) + offset;
 
-        #region CLAMP WITH OTHERS VCAM
-        //check if we collide with other vcam
-        if (vcamOther)
-        {
-            //check hit point position to lock the movement
-            hitPositionDiff = newPosition - (Vector2)vcamOther.position;
-            if (hitPositionDiff.x <= -newPosition.x + 0.01f)// we move from left to right, so clamp the x to not move to right
-            {
-                if (newPosition.x > hitPosition.x)
-                {
-                    newPosition = new Vector2(hitPosition.x, newPosition.y);
-                }
-            }
-            if (hitPositionDiff.x >= newPosition.x - 0.01f)// we move from left to right, so clamp the x to not move to right
-            {
-                if (newPosition.x < hitPosition.x)
-                {
-                    newPosition = new Vector2(hitPosition.x, newPosition.y);
-                }
-            }
-            //else if (hitPositionDiff.x >= transform.localPosition.x - 0.01f)// we move from right to left, so clamp the x to not move to left
-            //{
-            //    if (transform.position.x < hitPosition.x)
-            //    {
-            //        transform.position = new Vector2(hitPosition.x, transform.position.y);
-            //    }
-            //}
-        }
-        #endregion
+        Vector2 cornerPoint = new Vector2(transform.localScale.x / 2.1f, transform.localScale.y / 2.1f);
+        Collider2D overlapCollider = null;
 
-        transform.position = new Vector2((canMoveHorizontal) ? newPosition.x : transform.position.x
-            , (canMoveVertical) ? newPosition.y : transform.position.y);
+        RaycastVCam(lastPosition + cornerPoint, newPosition, ref desiredPosition, ref overlapCollider);
+        RaycastVCam(lastPosition - cornerPoint, newPosition, ref desiredPosition, ref overlapCollider);
+        RaycastVCam(lastPosition + new Vector2(cornerPoint.x, -cornerPoint.y), newPosition, ref desiredPosition, ref overlapCollider);
+        RaycastVCam(lastPosition + new Vector2(-cornerPoint.x, cornerPoint.y), newPosition, ref desiredPosition, ref overlapCollider);
+
+        Vector2 colliderCenter = newPosition;
+        if (overlapCollider == null)
+        {
+            var overlapColliders = Physics2D.OverlapAreaAll(colliderCenter + cornerPoint, colliderCenter - cornerPoint, layerMask);
+            foreach (Collider2D collider in overlapColliders)
+            {
+                if (collider.gameObject != gameObject)
+                {
+                    overlapCollider = collider;
+                    desiredPosition = GetClosestPosition(lastPosition - (Vector2)collider.transform.position, collider.transform.position, transform.localScale.x / 2);
+                    break;
+                }
+            }
+        }
+
+
+
+        Vector2 destination = new Vector2((canMoveHorizontal) ? newPosition.x : transform.position.x
+                    , (canMoveVertical) ? newPosition.y : transform.position.y);
+
+        if (isControlled && overlapCollider != null)
+        {
+            float horizontalDiff = Mathf.Abs(vcamOther.position.x - desiredPosition.x);
+            float verticalDiff = Mathf.Abs(vcamOther.position.y - desiredPosition.y);
+            if ((horizontalDiff >= transform.localScale.x - 0.1f &&
+                horizontalDiff <= transform.localScale.x + 0.1f))//lock horizontal movement
+            {
+                if (desiredPosition.x < vcamOther.position.x)
+                {
+                    if (transform.position.x >= desiredPosition.x)
+                        destination.x = vcamOther.position.x - vcamOther.localScale.x;
+                }
+                else if (desiredPosition.x > vcamOther.position.x)
+                {
+                    if (transform.position.x <= desiredPosition.x)
+                        destination.x = vcamOther.position.x + vcamOther.localScale.x;
+                }
+            }
+            else if ((verticalDiff >= transform.localScale.y - 0.1f &&
+                verticalDiff <= transform.localScale.y + 0.1f))//lock vertical movement
+            {
+                if (desiredPosition.y < vcamOther.position.y)
+                {
+                    if (transform.position.y >= desiredPosition.y)
+                        destination.y = vcamOther.position.y - vcamOther.localScale.y;
+                }
+                else if (desiredPosition.y > vcamOther.position.y)
+                {
+                    if (transform.position.y <= desiredPosition.y)
+                        destination.y = vcamOther.position.y + vcamOther.localScale.y;
+                }
+            }
+        }
+        rb2d.MovePosition(destination);
+
         //clamp with camera device
-        CheckPlanePositionToClamp();
+        ClampVcamWihBoundingCamera();
+
+        //save the last positon
+        lastPosition = transform.position;
+    }
+
+    private Collider2D RaycastVCam(Vector2 origin, Vector2 destination, ref Vector2 closestPos, ref Collider2D colliderResult)
+    {
+        if (colliderResult != null)
+        {
+            return colliderResult;
+        }
+
+
+        Collider2D collider = null;
+        RaycastHit2D[] hits = Physics2D.RaycastAll(origin, destination - origin, (destination - origin).magnitude, layerMask);
+        foreach (RaycastHit2D hit in hits)
+        {
+            if (hit.collider.gameObject != gameObject)
+            {
+                collider = hit.collider;
+                colliderResult = hit.collider;
+                closestPos = GetClosestPosition(lastPosition - (Vector2)hit.collider.transform.position, hit.collider.transform.position, transform.localScale.x / 2);
+                break;
+            }
+        }
+
+        return collider;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="direction"></param>
+    /// <param name="otherCollider"></param>
+    /// <param name="size">length from the edge of the square to the center</param>
+    /// <returns></returns>
+    private Vector2 GetClosestPosition(Vector2 direction, Vector2 otherCollider, float size)
+    {
+        direction.Normalize();// 
+        float magnitude = 1.01f;
+
+        //horizontal
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+        {
+            magnitude *= size * 2 / direction.x;
+        }
+        //vertical
+        else
+        {
+            magnitude *= size * 2 / direction.y;
+        }
+
+        Vector2 pos = otherCollider + (direction * Mathf.Abs(magnitude));
+        return pos;
     }
 
     /// <summary>
     /// Use to clamp plane position to not going outside of the camera while we playing, USED on PlayerMovement Method
     /// </summary>
-    private void CheckPlanePositionToClamp()
+    private void ClampVcamWihBoundingCamera()
     {
         if (mainCam == null || objRenderer == null)
             return;
@@ -119,24 +207,5 @@ public class VCamMovementController : MonoBehaviour
         transform.position = clampedPosition;
         #endregion
     }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (!isControlled) return;
-        vcamOther = collision.transform;
-        hitPositionDiff = transform.position - vcamOther.position;
-        hitPosition = transform.position;
-        print($"Our pos : {transform.position}");
-        print($"Other pos : {vcamOther.position}");
-
-        print($"Selisih vector = {hitPositionDiff}");
-        print($"Selisih vector position dengan hitpositiondiff : {(Vector2)transform.position - hitPositionDiff}");
-    }
-
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        if (!isControlled) return;
-        vcamOther = null;
-        hitPositionDiff = Vector2.zero;
-    }
+    #endregion
 }
