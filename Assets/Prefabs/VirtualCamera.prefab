@@ -242,11 +242,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 684dd9f68eb5f48439f4b82f837400fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hitPositionDiff: {x: 0, y: 0}
-  hitPosition: {x: 0, y: 0}
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  mainCam: {fileID: 0}
+  objRenderer: {fileID: 0}
+  lastPosition: {x: 0, y: 0}
+  offset: {x: 0, y: 0, z: 0}
+  desiredPosition: {x: 0, y: 0}
+  objectWidth: 0
+  objectHeight: 0
+  isControlled: 0
   vcamOther: {fileID: 0}
-  canMoveHorizontal: 0
-  canMoveVertical: 0
+  canMoveHorizontal: 1
+  canMoveVertical: 1
   lockedFromHorizontal: 0
   lockedFromVertical: 0
 --- !u!61 &1958394096253980549

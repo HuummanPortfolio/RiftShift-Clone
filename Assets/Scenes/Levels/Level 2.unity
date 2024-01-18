@@ -143,6 +143,22 @@ PrefabInstance:
       propertyPath: orthographic size
       value: 1.5
       objectReference: {fileID: 0}
+    - target: {fileID: 4104102600574591895, guid: 87ec2038b5a913f49969909e0ed548b8, type: 3}
+      propertyPath: m_Mass
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4104102600574591895, guid: 87ec2038b5a913f49969909e0ed548b8, type: 3}
+      propertyPath: m_LinearDrag
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4104102600574591895, guid: 87ec2038b5a913f49969909e0ed548b8, type: 3}
+      propertyPath: m_AngularDrag
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4104102600574591895, guid: 87ec2038b5a913f49969909e0ed548b8, type: 3}
+      propertyPath: m_GravityScale
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 4680569981425096410, guid: 87ec2038b5a913f49969909e0ed548b8, type: 3}
       propertyPath: m_Name
       value: SceneTemplate
