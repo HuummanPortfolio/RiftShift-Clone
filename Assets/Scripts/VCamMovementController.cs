@@ -3,23 +3,39 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using UnityEngine;
 
+[RequireComponent(typeof(VirtualCamera))]
 public class VCamMovementController : MonoBehaviour
 {
+    [Tooltip("For getting Vcam Mask to check overlaping and raycast")]
     [SerializeField] private LayerMask layerMask;
-    [SerializeField] private Camera mainCam;
-    [SerializeField] private Renderer objRenderer;
-    [SerializeField] private Vector2 lastPosition;
-    [SerializeField] private Vector3 offset;
-    [SerializeField] private Vector2 desiredPosition;
-    [SerializeField] private float objectWidth = 0f;
-    [SerializeField] private float objectHeight = 0f;
-    [SerializeField] private bool isControlled = false;
-    [SerializeField] private Transform vcamOther = null;
+    [Tooltip("To enable or disable the horizontal movement")]
     [SerializeField] bool canMoveHorizontal;
+    [Tooltip("To enable or disable the vertical movement")]
     [SerializeField] bool canMoveVertical;
-    [SerializeField] bool lockedFromHorizontal;
-    [SerializeField] bool lockedFromVertical;
+    /// <summary>
+    /// save the last positon of the vcam
+    /// </summary>
+    private Vector2 lastPosition;
+    /// <summary>
+    /// position of where the vcam collied with other vcam
+    /// </summary>
+    private Vector2 desiredPosition;
+    /// <summary>
+    /// true if we touch the vcam, so we can controll it
+    /// </summary>
+    private bool isControlled = false;
+    private VirtualCamera vCam;
     private Rigidbody2D rb2d;
+
+    #region VARIABLE FOR CLAMP CAMERA PURPOSE
+    /// <summary>
+    /// sprite renderer of the VCAM, to get the width and height the renderer
+    /// </summary>
+    private Renderer objRenderer;
+    private Camera mainCam;
+    private float objectWidth = 0f;
+    private float objectHeight = 0f;
+    #endregion
 
     #region MONO METHOD
     private void Awake()
@@ -30,7 +46,6 @@ public class VCamMovementController : MonoBehaviour
     private void OnMouseDown()
     {
         isControlled = true;
-        offset = transform.position - mainCam.ScreenToWorldPoint(Input.mousePosition);
     }
     private void OnMouseDrag()
     {
@@ -53,6 +68,7 @@ public class VCamMovementController : MonoBehaviour
         mainCam = Camera.main;
         objRenderer = GetComponent<Renderer>();
         rb2d = GetComponent<Rigidbody2D>();
+        vCam = GetComponent<VirtualCamera>();
         if (objRenderer != null)
         {
             objectWidth = objRenderer.bounds.extents.x;
@@ -62,10 +78,14 @@ public class VCamMovementController : MonoBehaviour
 
     private void VcamMovement()
     {
-        //move virtual cam
-        Vector2 newPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) + offset;
+        //get position of the cursor from the world point
+        Vector2 newPosition = mainCam.ScreenToWorldPoint(Input.mousePosition);
 
+        //get the corner point of the virtual camera
         Vector2 cornerPoint = new Vector2(transform.localScale.x / 2.1f, transform.localScale.y / 2.1f);
+
+        ///check for if we collide with the partner
+
         Collider2D overlapCollider = null;
 
         RaycastVCam(lastPosition + cornerPoint, newPosition, ref desiredPosition, ref overlapCollider);
@@ -93,39 +113,53 @@ public class VCamMovementController : MonoBehaviour
         Vector2 destination = new Vector2((canMoveHorizontal) ? newPosition.x : transform.position.x
                     , (canMoveVertical) ? newPosition.y : transform.position.y);
 
+        ///if we controll the camera, and its overlap with partner
         if (isControlled && overlapCollider != null)
         {
-            float horizontalDiff = Mathf.Abs(vcamOther.position.x - desiredPosition.x);
-            float verticalDiff = Mathf.Abs(vcamOther.position.y - desiredPosition.y);
+            //get the transform of the vcam partner
+            Transform vcamPartnerTransform = vCam.virtualcameraPartner.transform;
+
+            //get the different of the X axis from partner position with our desired to check we should lock horizontal movement or no
+            float horizontalDiff = Mathf.Abs(vcamPartnerTransform.position.x - desiredPosition.x);
+
+            //get the different of the Y axis from partner position with our desired to check we should lock vertical movement or no
+            float verticalDiff = Mathf.Abs(vcamPartnerTransform.position.y - desiredPosition.y);
+
             if ((horizontalDiff >= transform.localScale.x - 0.1f &&
                 horizontalDiff <= transform.localScale.x + 0.1f))//lock horizontal movement
             {
-                if (desiredPosition.x < vcamOther.position.x)
+                if (desiredPosition.x < vcamPartnerTransform.position.x)
                 {
+                    // snap it to left
                     if (transform.position.x >= desiredPosition.x)
-                        destination.x = vcamOther.position.x - vcamOther.localScale.x;
+                        destination.x = vcamPartnerTransform.position.x - vcamPartnerTransform.localScale.x;
                 }
-                else if (desiredPosition.x > vcamOther.position.x)
+                else if (desiredPosition.x > vcamPartnerTransform.position.x)
                 {
+                    // snap it to right
                     if (transform.position.x <= desiredPosition.x)
-                        destination.x = vcamOther.position.x + vcamOther.localScale.x;
+                        destination.x = vcamPartnerTransform.position.x + vcamPartnerTransform.localScale.x;
                 }
             }
             else if ((verticalDiff >= transform.localScale.y - 0.1f &&
                 verticalDiff <= transform.localScale.y + 0.1f))//lock vertical movement
             {
-                if (desiredPosition.y < vcamOther.position.y)
+                if (desiredPosition.y < vcamPartnerTransform.position.y)
                 {
+                    // snap it to bottom
                     if (transform.position.y >= desiredPosition.y)
-                        destination.y = vcamOther.position.y - vcamOther.localScale.y;
+                        destination.y = vcamPartnerTransform.position.y - vcamPartnerTransform.localScale.y;
                 }
-                else if (desiredPosition.y > vcamOther.position.y)
+                else if (desiredPosition.y > vcamPartnerTransform.position.y)
                 {
+                    // snap it to top
                     if (transform.position.y <= desiredPosition.y)
-                        destination.y = vcamOther.position.y + vcamOther.localScale.y;
+                        destination.y = vcamPartnerTransform.position.y + vcamPartnerTransform.localScale.y;
                 }
             }
         }
+
+        //set the transform position using rigidbody
         rb2d.MovePosition(destination);
 
         //clamp with camera device
@@ -135,6 +169,14 @@ public class VCamMovementController : MonoBehaviour
         lastPosition = transform.position;
     }
 
+    /// <summary>
+    /// Get the collider of the partner virtual camera, using raycast
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="destination"></param>
+    /// <param name="closestPos"></param>
+    /// <param name="colliderResult"></param>
+    /// <returns></returns>
     private Collider2D RaycastVCam(Vector2 origin, Vector2 destination, ref Vector2 closestPos, ref Collider2D colliderResult)
     {
         if (colliderResult != null)
@@ -160,7 +202,7 @@ public class VCamMovementController : MonoBehaviour
     }
 
     /// <summary>
-    /// 
+    /// Calculate the closest positon vector on our movement
     /// </summary>
     /// <param name="direction"></param>
     /// <param name="otherCollider"></param>
