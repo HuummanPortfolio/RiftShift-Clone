@@ -24,13 +24,6 @@ public class VirtualCamera : MonoBehaviour
 
     private void Awake()
     {
-        GetReference();
-        if (isMainVCam)
-            UpdateScale();
-    }
-
-    private void Update()
-    {
         var colliders = Physics2D.OverlapAreaAll(edgeTransform1.position, edgeTransform2.position, mask);
         if (colliders.Length != currentCollider)
         {
@@ -101,7 +94,7 @@ public class VirtualCamera : MonoBehaviour
         if (transform.localScale.x == baseSize || transform.localScale.y == baseSize)
             return;
 
-        transform.localScale = new(baseSize, baseSize, 1);
+        transform.localScale = new(baseSize, baseSize,1);
 
         if (renderCamera != null)
             renderCamera.orthographicSize = transform.localScale.x / 2;
@@ -110,12 +103,12 @@ public class VirtualCamera : MonoBehaviour
     private void UpdateScale(float size)
     {
         baseSize = size;
-        transform.localScale = new(size, size, 1);
+        transform.localScale = new(size, size,1);
 
         if (renderCamera != null)
             renderCamera.orthographicSize = transform.localScale.x / 2;
     }
-
+    
     private void GetReference()
     {
         if (renderCamera == null) renderCamera = GetComponentInChildren<Camera>();
