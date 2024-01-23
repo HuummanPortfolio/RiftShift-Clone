@@ -1,9 +1,7 @@
 {
     "name": "RiftShiftClone",
     "rootNamespace": "RiftShift_Clone",
-    "references": [
-        ""
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -2,14 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class VirtualCamera : MonoBehaviour
 {
     [Header("Transform")]
     [SerializeField] float baseSize = 3;
-    [FormerlySerializedAs("transformUjung1")] public Transform edgeTransform1;
-    [FormerlySerializedAs("transformUjung2")] public Transform edgeTransform2;
+    [UnityEngine.Serialization.FormerlySerializedAs("transformUjung1")] public Transform edgeTransform1;
+    [UnityEngine.Serialization.FormerlySerializedAs("transformUjung2")] public Transform edgeTransform2;
 
     [Header("Colliders")]
     public int currentCollider = 0;
@@ -21,13 +20,6 @@ public class VirtualCamera : MonoBehaviour
     [SerializeField] private bool isMainVCam;
     [SerializeField] private Camera renderCamera;
     [SerializeField] private RenderTexture targetRenderTexture;
-
-    private void Awake()
-    {
-        GetReference();
-        if (isMainVCam)
-            UpdateScale();
-    }
 
     private void Update()
     {
@@ -115,7 +107,7 @@ public class VirtualCamera : MonoBehaviour
         if (renderCamera != null)
             renderCamera.orthographicSize = transform.localScale.x / 2;
     }
-
+    
     private void GetReference()
     {
         if (renderCamera == null) renderCamera = GetComponentInChildren<Camera>();
