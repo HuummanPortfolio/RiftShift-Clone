@@ -22,7 +22,7 @@ public class VirtualCamera : MonoBehaviour
     [SerializeField] private Camera renderCamera;
     [SerializeField] private RenderTexture targetRenderTexture;
 
-    private void Awake()
+    private void Update()
     {
         var colliders = Physics2D.OverlapAreaAll(edgeTransform1.position, edgeTransform2.position, mask);
         if (colliders.Length != currentCollider)
